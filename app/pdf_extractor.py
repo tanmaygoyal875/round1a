@@ -1,14 +1,10 @@
-# app/pdf_extractor.py
-
-import fitz  # PyMuPDF
+import fitz
 import os
 import json
 
 def extract_outline_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     font_stats = {}
-
-    # Collect all text blocks with font sizes
     text_blocks = []
     for page_number, page in enumerate(doc, start=1):
         blocks = page.get_text("dict")["blocks"]
@@ -27,24 +23,16 @@ def extract_outline_from_pdf(pdf_path):
                         "font": span["font"],
                         "page": page_number
                     })
-
-    # Determine likely heading font sizes
     common_fonts = sorted(font_stats.items(), key=lambda x: -x[1])
     font_sizes = sorted(set(size for (size, _), _ in common_fonts), reverse=True)
-
     if len(font_sizes) < 3:
         font_sizes += [0] * (3 - len(font_sizes))  # padding
-
     h1_size, h2_size, h3_size = font_sizes[:3]
-
-    # Extract title: largest text on page 1
     title = "Untitled Document"
     for block in text_blocks:
         if block["page"] == 1 and block["size"] == h1_size:
             title = block["text"]
             break
-
-    # Extract outline
     outline = []
     for block in text_blocks:
         level = None
@@ -60,7 +48,6 @@ def extract_outline_from_pdf(pdf_path):
                 "text": block["text"],
                 "page": block["page"]
             })
-
     return {"title": title, "outline": outline}
 
 def main():
